@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Sound;
+use App\Models\Comment;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
@@ -65,5 +67,29 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the sounds for the user.
+     */
+    public function sounds()
+    {
+        return $this->hasMany(Sound::class);
+    }
+
+    /**
+     * The sounds that the user has liked.
+     */
+    public function likes()
+    {
+        return $this->belongsToMany(Sound::class, 'likes', 'user_id', 'sound_id');
+    }
+
+    /**
+     * Get the comments for the user.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
     }
 }

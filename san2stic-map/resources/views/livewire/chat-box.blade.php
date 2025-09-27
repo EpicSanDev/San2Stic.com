@@ -1,28 +1,45 @@
-<div class="bg-white shadow-md rounded-lg p-4 h-96 flex flex-col">
+<div class="h-96 flex flex-col">
     <!-- Message Display Area -->
-    <div class="flex-grow overflow-y-auto mb-4 border rounded-lg p-3">
-        @foreach ($messages as $message)
-            <div class="mb-2 @if(is_object($message) && property_exists($message, 'user') && $message->user->id == auth()->id()) text-right @endif">
-                <p class="text-xs text-gray-500">
-                    @if(is_object($message) && property_exists($message, 'user'))
-                        {{ $message->user->name }}
-                    @elseif(is_object($message) && property_exists($message, 'user') && is_array($message->user))
-                        {{ $message->user['name'] }}
+    <div class="flex-grow overflow-y-auto mb-4 p-3 bg-base-200 rounded-lg">
+        @forelse ($messages as $message)
+            @php
+                $isCurrentUser = false;
+                $userName = 'Guest';
+                $userId = null;
+
+                if (is_object($message) && property_exists($message, 'user') && $message->user) {
+                    $isCurrentUser = $message->user->id == auth()->id();
+                    $userName = $message->user->name;
+                    $userId = $message->user->id;
+                } elseif (is_object($message) && property_exists($message, 'user') && is_array($message->user)) {
+                    $isCurrentUser = $message->user['id'] == auth()->id();
+                    $userName = $message->user['name'];
+                    $userId = $message->user['id'];
+                }
+            @endphp
+            <div class="chat {{ $isCurrentUser ? 'chat-end' : 'chat-start' }}">
+                <div class="chat-header">
+                    @if($userId)
+                        <a href="{{ route('users.show', $userId) }}" class="hover:underline">{{ $userName }}</a>
+                    @else
+                        {{ $userName }}
                     @endif
-                </p>
-                <div class="inline-block p-2 rounded-lg @if(is_object($message) && property_exists($message, 'user') && $message->user->id == auth()->id()) bg-blue-500 text-white @else bg-gray-200 @endif">
+                    <time class="text-xs opacity-50">{{ \Carbon\Carbon::parse($message->created_at)->format('H:i') }}</time>
+                </div>
+                <div class="chat-bubble {{ $isCurrentUser ? 'chat-bubble-primary' : '' }}">
                     {{ $message->message }}
                 </div>
-                <p class="text-xs text-gray-400">
-                     {{ \Carbon\Carbon::parse($message->created_at)->format('H:i') }}
-                </p>
             </div>
-        @endforeach
+        @empty
+            <div class="text-center text-base-content opacity-50">
+                No messages yet. Start the conversation!
+            </div>
+        @endforelse
     </div>
 
     <!-- Message Input Form -->
     <form wire:submit.prevent="sendMessage" class="flex">
-        <input wire:model="newMessage" type="text" class="flex-grow border rounded-l-lg p-2" placeholder="Type your message...">
-        <button type="submit" class="bg-blue-500 text-white p-2 rounded-r-lg hover:bg-blue-600">Send</button>
+        <input wire:model="newMessage" type="text" class="input input-bordered w-full" placeholder="Type your message...">
+        <button type="submit" class="btn btn-primary ms-2">Send</button>
     </form>
 </div>

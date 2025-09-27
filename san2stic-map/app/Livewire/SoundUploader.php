@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Sound;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -30,6 +31,7 @@ class SoundUploader extends Component
         $path = $this->audioFile->store('sounds', 's3');
 
         Sound::create([
+            'user_id' => Auth::id(),
             'name' => $this->name,
             'path' => $path,
             'latitude' => $this->latitude,

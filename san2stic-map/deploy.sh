@@ -35,6 +35,10 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+php_extension_exists() {
+    php -m | grep -qi "^$1$"
+}
+
 # --- Début du script ---
 echo_info "Démarrage du script de déploiement pour San2Stic Map..."
 
@@ -52,14 +56,14 @@ done
 # 2. Collecte des informations
 echo_info "Veuillez fournir les informations suivantes pour la configuration :"
 
-read -p "URL de votre dépôt Git (ex: https://github.com/user/repo.git) : " GIT_REPO
-read -p "Nom de domaine (ex: san2stic.com) : " APP_URL
-read -p "Version de PHP installée sur le VPS (ex: 8.3) : " PHP_VERSION
-read -p "Chemin absolu du projet (ex: /var/www/san2stic-map) : " PROJECT_PATH
+while true; do read -p "URL de votre dépôt Git (ex: https://github.com/user/repo.git) : " GIT_REPO; if [ -n "$GIT_REPO" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
+while true; do read -p "Nom de domaine (ex: san2stic.com) : " APP_URL; if [ -n "$APP_URL" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
+while true; do read -p "Version de PHP installée sur le VPS (ex: 8.3) : " PHP_VERSION; if [ -n "$PHP_VERSION" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
+while true; do read -p "Chemin absolu du projet (ex: /var/www/san2stic-map) : " PROJECT_PATH; if [ -n "$PROJECT_PATH" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
 
 echo_info "Configuration de la base de données :"
-read -p "Nom de la base de données : " DB_DATABASE
-read -p "Utilisateur de la base de données : " DB_USERNAME
+while true; do read -p "Nom de la base de données : " DB_DATABASE; if [ -n "$DB_DATABASE" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
+while true; do read -p "Utilisateur de la base de données : " DB_USERNAME; if [ -n "$DB_USERNAME" ]; then break; else echo_warning "Ne peut pas être vide."; fi; done
 read -s -p "Mot de passe de la base de données : " DB_PASSWORD
 echo
 
@@ -73,6 +77,18 @@ read -p "AWS Access Key ID : " AWS_ACCESS_KEY_ID
 read -p "AWS Secret Access Key : " AWS_SECRET_ACCESS_KEY
 read -p "AWS Default Region : " AWS_DEFAULT_REGION
 read -p "AWS Bucket Name : " AWS_BUCKET
+
+# 2.1. Vérification des extensions PHP
+echo_info "Vérification des extensions PHP requises pour la version ${PHP_VERSION}..."
+# L'extension 'dom' et 'simplexml' sont incluses dans 'xml'.
+PHP_EXTS=("curl" "mbstring" "xml" "zip" "intl" "pdo_mysql")
+for ext in "${PHP_EXTS[@]}"; do
+    if php_extension_exists "$ext"; then
+        echo_success "- Extension PHP '$ext' trouvée."
+    else
+        echo_error "Extension PHP '$ext' non trouvée. Veuillez l'installer (ex: sudo apt install php${PHP_VERSION}-${ext})."
+    fi
+done
 
 # --- Exécution du déploiement ---
 
@@ -106,34 +122,68 @@ else
     cd "$PROJECT_PATH"
 fi
 
+# Vérification de la présence du fichier artisan
+if [ ! -f "artisan" ]; then
+    echo_error "Le fichier 'artisan' n'a pas été trouvé dans le répertoire '${PROJECT_PATH}'. Veuillez vous assurer que le chemin fourni est bien la racine de votre projet Laravel."
+fi
+
 echo_info "Création et configuration du fichier .env..."
-cp .env.example .env
 
-# Remplacement des variables dans .env
-sed -i "s|^APP_URL=.*|APP_URL=https://${APP_URL}|g" .env
-sed -i 's|^APP_ENV=.*|APP_ENV=production|g' .env
-sed -i 's|^APP_DEBUG=.*|APP_DEBUG=false|g' .env
+cat <<EOF > .env
+APP_NAME=San2SticMap
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://${APP_URL}
+APP_KEY=
 
-sed -i 's|^DB_CONNECTION=.*|DB_CONNECTION=mysql|g' .env
-sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE}|g" .env
-sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|g" .env
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|g" .env
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
 
-sed -i "s|^PUSHER_APP_ID=.*|PUSHER_APP_ID=${PUSHER_APP_ID}|g" .env
-sed -i "s|^PUSHER_APP_KEY=.*|PUSHER_APP_KEY=${PUSHER_APP_KEY}|g" .env
-sed -i "s|^PUSHER_APP_SECRET=.*|PUSHER_APP_SECRET=${PUSHER_APP_SECRET}|g" .env
-sed -i "s|^PUSHER_APP_CLUSTER=.*|PUSHER_APP_CLUSTER=${PUSHER_APP_CLUSTER}|g" .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=${DB_DATABASE}
+DB_USERNAME=${DB_USERNAME}
+DB_PASSWORD=${DB_PASSWORD}
 
-sed -i "s|^AWS_ACCESS_KEY_ID=.*|AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}|g" .env
-sed -i "s|^AWS_SECRET_ACCESS_KEY=.*|AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}|g" .env
-sed -i "s|^AWS_DEFAULT_REGION=.*|AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}|g" .env
-sed -i "s|^AWS_BUCKET=.*|AWS_BUCKET=${AWS_BUCKET}|g" .env
+BROADCAST_CONNECTION=pusher
+FILESYSTEM_DISK=s3
+QUEUE_CONNECTION=database
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
 
-echo_info "Génération de la clé d'application..."
-php artisan key:generate
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=
+MAIL_PORT=
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="hello@${APP_URL}"
+MAIL_FROM_NAME="\${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+AWS_BUCKET=${AWS_BUCKET}
+
+PUSHER_APP_ID=${PUSHER_APP_ID}
+PUSHER_APP_KEY=${PUSHER_APP_KEY}
+PUSHER_APP_SECRET=${PUSHER_APP_SECRET}
+PUSHER_APP_CLUSTER=${PUSHER_APP_CLUSTER}
+
+VITE_PUSHER_APP_KEY="\${PUSHER_APP_KEY}"
+VITE_PUSHER_APP_CLUSTER="\${PUSHER_APP_CLUSTER}"
+EOF
 
 echo_info "Installation des dépendances Composer..."
 composer install --optimize-autoloader --no-dev
+
+echo_info "Génération de la clé d'application..."
+php artisan key:generate
 
 echo_info "Installation des dépendances NPM et compilation des assets..."
 npm install

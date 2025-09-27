@@ -24,4 +24,8 @@ Route::middleware([
     Route::get('/sound/{sound}/edit', [App\Http\Controllers\SoundController::class, 'edit'])->name('sound.edit');
 
     Route::post('/sound/{sound}/trim', [App\Http\Controllers\SoundController::class, 'trim'])->name('sound.trim');
+
+    Route::get('/leaderboard', App\Livewire\Leaderboard::class)->name('leaderboard');
+
+    Route::get('/users/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('users.show');
 });
