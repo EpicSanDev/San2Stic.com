@@ -73,10 +73,12 @@ read -p "Pusher App ID : " PUSHER_APP_ID
 read -p "Pusher App Key : " PUSHER_APP_KEY
 read -p "Pusher App Secret : " PUSHER_APP_SECRET
 read -p "Pusher App Cluster : " PUSHER_APP_CLUSTER
-read -p "AWS Access Key ID : " AWS_ACCESS_KEY_ID
-read -p "AWS Secret Access Key : " AWS_SECRET_ACCESS_KEY
-read -p "AWS Default Region : " AWS_DEFAULT_REGION
-read -p "AWS Bucket Name : " AWS_BUCKET
+read -p "AWS Access Key ID (Hetzner Access Key) : " AWS_ACCESS_KEY_ID
+read -p "AWS Secret Access Key (Hetzner Secret Key) : " AWS_SECRET_ACCESS_KEY
+read -p "AWS Default Region (Hetzner Region, ex: eu-central-1) : " AWS_DEFAULT_REGION
+read -p "AWS Bucket Name (Hetzner Bucket Name) : " AWS_BUCKET
+read -p "AWS Endpoint (Hetzner S3 Endpoint, ex: https://<region>.digitaloceanspaces.com or https://<region>.minio.io) : " AWS_ENDPOINT
+read -p "Webhook Secret (for auto-deployment, leave empty to disable) : " WEBHOOK_SECRET
 
 # 2.1. Vérification des extensions PHP
 echo_info "Vérification des extensions PHP requises pour la version ${PHP_VERSION}..."
@@ -169,14 +171,18 @@ AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
 AWS_BUCKET=${AWS_BUCKET}
+AWS_ENDPOINT=${AWS_ENDPOINT}
+AWS_USE_PATH_STYLE_ENDPOINT=true
 
 PUSHER_APP_ID=${PUSHER_APP_ID}
 PUSHER_APP_KEY=${PUSHER_APP_KEY}
 PUSHER_APP_SECRET=${PUSHER_APP_SECRET}
 PUSHER_APP_CLUSTER=${PUSHER_APP_CLUSTER}
 
-VITE_PUSHER_APP_KEY="\${PUSHER_APP_KEY}"
-VITE_PUSHER_APP_CLUSTER="\${PUSHER_APP_CLUSTER}"
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+
+WEBHOOK_SECRET=${WEBHOOK_SECRET}
 EOF
 
 echo_info "Installation des dépendances Composer..."

@@ -3,19 +3,9 @@
     <div class="flex-grow overflow-y-auto mb-4 p-3 bg-base-200 rounded-lg">
         @forelse ($messages as $message)
             @php
-                $isCurrentUser = false;
-                $userName = 'Guest';
-                $userId = null;
-
-                if (is_object($message) && property_exists($message, 'user') && $message->user) {
-                    $isCurrentUser = $message->user->id == auth()->id();
-                    $userName = $message->user->name;
-                    $userId = $message->user->id;
-                } elseif (is_object($message) && property_exists($message, 'user') && is_array($message->user)) {
-                    $isCurrentUser = $message->user['id'] == auth()->id();
-                    $userName = $message->user['name'];
-                    $userId = $message->user['id'];
-                }
+                $isCurrentUser = $message->user->id == auth()->id();
+                $userName = $message->user->name;
+                $userId = $message->user->id;
             @endphp
             <div class="chat {{ $isCurrentUser ? 'chat-end' : 'chat-start' }}">
                 <div class="chat-header">

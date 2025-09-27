@@ -2,13 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/offline', function () {
     return view('offline');
-});
+})->name('offline');
+
+Route::post('/webhook/deploy', [App\Http\Controllers\WebhookController::class, 'deploy'])->name('webhook.deploy');
 
 Route::middleware([
     'auth:sanctum',
