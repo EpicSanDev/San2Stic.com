@@ -73,11 +73,7 @@ read -p "Pusher App ID : " PUSHER_APP_ID
 read -p "Pusher App Key : " PUSHER_APP_KEY
 read -p "Pusher App Secret : " PUSHER_APP_SECRET
 read -p "Pusher App Cluster : " PUSHER_APP_CLUSTER
-read -p "AWS Access Key ID (Hetzner Access Key) : " AWS_ACCESS_KEY_ID
-read -p "AWS Secret Access Key (Hetzner Secret Key) : " AWS_SECRET_ACCESS_KEY
-read -p "AWS Default Region (Hetzner Region, ex: eu-central-1) : " AWS_DEFAULT_REGION
-read -p "AWS Bucket Name (Hetzner Bucket Name) : " AWS_BUCKET
-read -p "AWS Endpoint (Hetzner S3 Endpoint, ex: https://<region>.digitaloceanspaces.com or https://<region>.minio.io) : " AWS_ENDPOINT
+# AWS S3 / Hetzner Object Storage configuration removed, using local storage.
 read -p "Webhook Secret (for auto-deployment, leave empty to disable) : " WEBHOOK_SECRET
 
 # 2.1. Vérification des extensions PHP
